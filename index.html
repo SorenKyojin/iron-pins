@@ -20,10 +20,14 @@
             <button>Tableau...</button>
         </div>
     </header>
-    <div>
+    <div class="flex top-bar">
         <button id="new-pin-btn" class="btn-alt">Nouveau Pin</button>
+        <div class="search-container">
+            <input type="text" id="search-bar" name="Rechercher" placeholder="Mots-clés">
+            <button type="submit" id="search-submit" class="btn-clear">Rechercher</button>
+        </div>
     </div>
-    <form action="" id="new-pin" class="hidden">
+    <form action="post" id="new-pin" class="hidden">
         <label for="titre">Titre</label>
         <input id="titre" required>
         <label for="description">Description</label>
@@ -43,12 +47,8 @@
             <option value="green">Vert</option>
             <option value="purple">Violet</option>
         </select>
-        <button type="submit" id="submit-new-pin-data">Créer un pin</button>
+        <button type="submit" id="submit-new-pin-data" class="btn-alt">Créer un pin</button>
     </form>
-    <div class="input-group">
-        <input type="text" id="rechercher" name="Rechercher" placeholder="Rechercher">
-        <button type="submit">Submit</button>
-    </div>
     <main id="pinboard"></main>
 </body>
 <script src="main.js"></script>
