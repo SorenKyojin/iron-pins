@@ -1,6 +1,7 @@
 const taskForm = document.getElementById('new-pin');
 const form = document.getElementById('formulaire');
 const liste = document.querySelector("liste-taches");
+const taches = document..querySelector("tache")
 
 form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -20,7 +21,7 @@ const tache = {
 function afficherTaches() {
     liste.innerHTML = "";
 
-    tache.forEach((tache) => {
+    taches.forEach((tache) => {
         const tache = document.createElement("new-pin");
         tache.classList.add("new-pin");
 
