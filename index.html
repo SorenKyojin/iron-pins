@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de taches</title>
+    <link rel="stylesheet" href=".css">
+
+</head>
+
+<body>
+    <form action="">
+        <label for="Titre">Titre</label>
+        <input id="Titre" required>
+
+        <label for="description">Description</label>
+        <textarea id="description">Description</textarea>
+
+        <label for="Propositions">Choisir une proposition</label>
+        <select name="Proposition" id="Propositions">
+            <option value="a faire">A faire</option>
+            <option value="en cours ">En cours</option>
+            <option value="terminées">Terminées</option>
+            <option value="bloquées">Bloquées</option>
+        </select>
+
+        <div class="input-group">
+            <input type="text" id="rechercher" name="Rechercher" placeholder="Rechercher"> ``
+            <button type="submit">Submit</button>
+        </div>
+
+        <script src=".js"></script>
+
+    </form>
+</body>
+
+</html>
