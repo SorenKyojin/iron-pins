@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de taches</title>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>Pins</h1>
+            <div class="separator"></div>
+            <h1 id="table-name"></h1>
+        </div>
+        <div>
+            <button>Tableau...</button>
+        </div>
+    </header>
+    <div>
+        <button id="new-pin-btn">Nouveau Pin</button>
+    </div>
+    <form action="" id="new-pin">
+        <label for="titre">Titre</label>
+        <input id="titre" required>
+
+        <label for="description">Description</label>
+        <textarea id="description">Description</textarea>
+
+        <label for="Propositions">Choisir un statut</label>
+        <select name="Proposition" id="Propositions">
+            <option value="a-faire">A faire</option>
+            <option value="en-cours">En cours</option>
+            <option value="terminees">Terminées</option>
+            <option value="bloquees">Bloquées</option>
+        </select>
+
+        <script src=".js"></script>
+
+    </form>
+    <div class="input-group">
+        <input type="text" id="rechercher" name="Rechercher" placeholder="Rechercher">
+        <button type="submit">Submit</button>
+    </div>
+</body>
+
+</html>
