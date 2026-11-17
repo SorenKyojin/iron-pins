@@ -11,7 +11,7 @@
 
 <body>
     <header>
-        <div>
+        <div class="flex fb-align-center">
             <h1>Pins</h1>
             <div class="separator"></div>
             <h1 id="table-name"></h1>
@@ -21,30 +21,35 @@
         </div>
     </header>
     <div>
-        <button id="new-pin-btn">Nouveau Pin</button>
+        <button id="new-pin-btn" class="btn-alt">Nouveau Pin</button>
     </div>
-    <form action="" id="new-pin">
+    <form action="" id="new-pin" class="hidden">
         <label for="titre">Titre</label>
         <input id="titre" required>
-
         <label for="description">Description</label>
         <textarea id="description">Description</textarea>
-
-        <label for="Propositions">Choisir un statut</label>
-        <select name="Proposition" id="Propositions">
-            <option value="a-faire">A faire</option>
-            <option value="en-cours">En cours</option>
-            <option value="terminees">Terminées</option>
-            <option value="bloquees">Bloquées</option>
+        <label for="statut">Choisir un statut</label>
+        <select name="statut" id="statut">
+            <option value="todo">À faire</option>
+            <option value="progress">En cours</option>
+            <option value="done">Terminées</option>
+            <option value="blocked">Bloquées</option>
         </select>
-
-        <script src=".js"></script>
-
+        <label for="couleur">Couleur</label>
+        <select name="color" id="couleur">
+            <option value="yellow">Jaune</option>
+            <option value="blue">Bleu</option>
+            <option value="red">Rouge</option>
+            <option value="green">Vert</option>
+            <option value="purple">Violet</option>
+        </select>
+        <button type="submit" id="submit-new-pin-data">Créer un pin</button>
     </form>
     <div class="input-group">
         <input type="text" id="rechercher" name="Rechercher" placeholder="Rechercher">
         <button type="submit">Submit</button>
     </div>
+    <main id="pinboard"></main>
 </body>
-
+<script src="main.js"></script>
 </html>
