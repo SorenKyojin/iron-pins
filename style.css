@@ -6,6 +6,9 @@
     --font-color-dark: #FFF;
     --font-color-light: #383838;
     --dark-btn-color: #444444;
+
+    /* Couleur des pins */
+    /* "d" signifie "darker", on s'en sert pour le contour des pastilles et le fond du bouton supprimer (⨉)*/
     --pin-yellow: #FFD05E;
     --pin-yellow-d: #D4AB47;
     --pin-red: #ff5e5e;
@@ -18,6 +21,14 @@
     --pin-green-d: #5ed447;
     --pin-purple: #c45eff;
     --pin-purple-d: #a747d4;
+
+    /* Couleurs des pastilles */
+    --st-done: #6FE05B;
+    --st-progress: #F2DA00;
+    --st-todo: #0096F2;
+    --st-blocked: #E75252;
+
+    --pin-blue-text: #FFF;
 }
 html{
     background-color: var(--dark-bg-color);
@@ -146,4 +157,108 @@ select{
     border-radius: 32px;
     font-size: 22px;
     padding: 6px 16px;
+}
+
+
+/* Conteneur principal (#pinboard) en grille sans grands espaces verticaux */
+#pinboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  align-items: start;
+  column-count: 3;
+  column-gap: 16px;
+  padding: 20px;
+}
+
+/* Carte du Pin */
+.pin-card {
+  border-radius: 20px;
+  padding: 16px 20px;
+  color: var(--font-color-light); /* #383838 par défaut */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  break-inside: avoid; /* Empêche un pin d'être coupé entre deux colonnes */
+  margin-bottom: 16px;
+}
+
+/* Texte blanc uniquement pour les pins bleus (comme sur la maquette) */
+.pin-card .pin-blue-text {
+  color: var(--font-color-dark); /* #FFF */
+}
+
+/* En-tête du Pin : pastille à gauche, titre au centre, croix à droite */
+.pin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Pastille de statut avec contour de la couleur foncée du pin */
+.status-badge {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  border: 2px solid var(--pin-darker);
+  flex-shrink: 0;
+}
+/* Application des couleurs des pastilles selon le statut */
+.status-badge.st-done { background-color: var(--st-done); }
+.status-badge.st-progress { background-color: var(--st-progress); }
+.status-badge.st-todo { background-color: var(--st-todo); }
+.status-badge.st-blocked { background-color: var(--st-blocked); }
+
+/* Titre centré et tronqué si trop long */
+.pin-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  text-align: center;
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  outline: none;
+}
+
+/* Bouton supprimer rond avec fond de la couleur foncée du pin */
+.delete-btn {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--pin-darker);
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+
+.delete-btn:hover {
+  opacity: 0.8;
+}
+
+/* Description */
+.pin-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  outline: none;
+  word-wrap: break-word;
 }
