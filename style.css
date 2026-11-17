@@ -37,14 +37,12 @@ header{
     align-items: center;
 }
 button{
-    border: none;
     background-color: var(--dark-btn-color);
     border: 2px solid var(--dark-btn-color);
     color: var(--font-color-dark);
     border-radius: 32px;
     font-size: 22px;
     padding: 6px 16px;
-
 }
 button:hover{
     border: 2px solid var(--blue);
@@ -57,6 +55,14 @@ button:hover{
 .btn-alt:hover{
     background-color: #3d89e6;
     border: 2px solid #3d89e6;
+}
+.btn-clear{
+    background-color: transparent;
+    border: 2px solid #BBBBBB;
+}
+.btn-clear:hover{
+    background-color: transparent;
+    border: 2px solid var(--blue);
 }
 .separator{
     /* Line */
@@ -85,7 +91,7 @@ button:hover{
     flex-direction: column;
     gap: 12px;
 
-    background-color: var(#222222);
+    background-color: #222222;
     border-radius: 32px;
 }
 #new-pin input, textarea{
@@ -104,4 +110,40 @@ label {
 }
 .hidden {
   display: none !important;
+}
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Pousse les éléments aux extrémités */
+  width: 100%;
+  padding: 10px 20px;
+  box-sizing: border-box;
+}
+
+/* Le conteneur de recherche se centre tout seul au milieu grâce aux marges automatiques */
+.search-container {
+  display: flex;
+  gap: 8px;
+  margin-inline: auto; /* Centre l'élément horizontalement dans l'espace disponible */
+}
+#search-bar{
+    background-color: var(--dark-btn-color);
+    border: 2px solid var(--dark-btn-color);
+    color: var(--font-color-dark);
+    border-radius: 32px;
+    font-size: 22px;
+    padding: 6px 16px;
+    min-width: 512px;
+}
+#search-bar:focus{
+    background-color: var(--dark-btn-color);
+    border: 2px solid var(--blue);
+}
+select{
+    background-color: var(--dark-btn-color);
+    border: 2px solid var(--dark-btn-color);
+    color: var(--font-color-dark);
+    border-radius: 32px;
+    font-size: 22px;
+    padding: 6px 16px;
 }
