@@ -27,29 +27,40 @@
             <button type="submit" id="search-submit" class="btn-clear">Rechercher</button>
         </div>
     </div>
-    <form action="post" id="new-pin" class="hidden">
+    <form action="" id="new-pin" class="hidden">
+
         <label for="titre">Titre</label>
-        <input id="titre" required>
+        <input id="titre" name="titre" required>
+
         <label for="description">Description</label>
-        <textarea id="description">Description</textarea>
+        <textarea id="description" name="description">Description</textarea>
         <label for="statut">Choisir un statut</label>
+
         <select name="statut" id="statut">
-            <option value="todo">À faire</option>
-            <option value="progress">En cours</option>
-            <option value="done">Terminées</option>
-            <option value="blocked">Bloquées</option>
+            <option value="À faire">À faire</option>
+            <option value="En cours">En cours</option>
+            <option value="Terminées">Terminées</option>
+            <option value="Bloquées">Bloquées</option>
         </select>
+
         <label for="couleur">Couleur</label>
         <select name="color" id="couleur">
-            <option value="yellow">Jaune</option>
-            <option value="blue">Bleu</option>
-            <option value="red">Rouge</option>
-            <option value="green">Vert</option>
-            <option value="purple">Violet</option>
+            <option value="Jaune">Jaune</option>
+            <option value="Bleu">Bleu</option>
+            <option value="Rouge">Rouge</option>
+            <option value="Vert">Vert</option>
+            <option value="Violet">Violet</option>
         </select>
         <button type="submit" id="submit-new-pin-data" class="btn-alt">Créer un pin</button>
     </form>
+
+    <div class="input-group">
+        <input type="text" id="rechercher" name="Rechercher" placeholder="Rechercher">
+        <button type="submit">Submit</button>
+    </div>
+
     <main id="pinboard"></main>
 </body>
 <script src="main.js"></script>
+
 </html>
