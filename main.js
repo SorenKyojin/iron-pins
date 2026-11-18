@@ -64,6 +64,21 @@ class BoardManager {
     }
     return false;
   }
+  duplicateBoard(id) {
+    const board = this.getBoardById(id);
+    if (!board) return null;
+
+    const duplicatedBoard = {
+      ...board,
+      id: crypto.randomUUID(),
+      title: `${board.title} (Copie)`,
+      createdAt: new Date().toISOString()
+    };
+
+    this.boards.push(duplicatedBoard);
+    this.saveToStorage();
+    return duplicatedBoard;
+  }
 }
 
 
@@ -91,7 +106,14 @@ const statusMap = {
 
 const statusCycle = ['todo', 'progress', 'done', 'blocked'];
 
-// Affichage des pins dans le <main id="pinboard">
+// Désactivation du menu contextuel par défaut du navigateur sur toute la page
+document.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+});
+
+const colorCycle = ['yellow', 'blue', 'red', 'green', 'purple'];
+
+// Mise à jour de la fonction renderPins pour inclure le menu caché
 function renderPins() {
   if (!pinboard) return;
   pinboard.innerHTML = '';
@@ -104,11 +126,9 @@ function renderPins() {
     
     if (board.color) {
       pinElement.style.backgroundColor = `var(--pin-${board.color})`;
-      // Permet d'utiliser la couleur foncée correspondante pour la pastille et la croix
-      pinElement.style.setProperty('--pin-darker', `var(--pin-${board.color}-d)`);
+      pinElement.style.setProperty('--pin-darker', `var(--pin-${board.color}-d)` );
     }
 
-    // Règle spécifique de la maquette : le texte des pins bleus est blanc
     if (board.color === 'blue') {
       pinElement.classList.add('pin-blue-text');
     }
@@ -118,15 +138,71 @@ function renderPins() {
     pinElement.innerHTML = `
       <div class="pin-header">
         <span class="status-badge ${currentStatusInfo.class}" data-action="toggle-status" title="Changer le statut"></span>
-        <h3 class="pin-title" contenteditable="true" title="${escapeHTML(board.title)}">${escapeHTML(board.title)}</h3>
+        <h3 class="pin-title" contenteditable="true" spellcheck="false" title="${escapeHTML(board.title)}">${escapeHTML(board.title)}</h3>
         <button class="delete-btn" data-action="delete" title="Supprimer">×</button>
       </div>
-      <p class="pin-desc" contenteditable="true">${escapeHTML(board.description)}</p>
+      <p class="pin-desc" contenteditable="true" spellcheck="false">${escapeHTML(board.description)}</p>
+      
+      <!-- Menu contextuel caché derrière le pin -->
+      <div class="pin-context-menu">
+        <button data-action="duplicate">Dupliquer</button>
+        <button data-action="change-color">Changer la couleur</button>
+      </div>
     `;
 
     pinboard.appendChild(pinElement);
   });
 }
+
+// Gestion du clic droit sur un pin pour afficher le menu
+pinboard.addEventListener('contextmenu', (e) => {
+  const pinCard = e.target.closest('.pin-card');
+  if (!pinCard) return;
+  e.preventDefault();
+
+  // Fermer les autres menus ouverts
+  document.querySelectorAll('.pin-card.menu-open').forEach(card => {
+    if (card !== pinCard) card.classList.remove('menu-open');
+  });
+
+  // Basculer l'état du menu sur ce pin
+  pinCard.classList.toggle('menu-open');
+});
+
+// Gestion des clics (actions du menu contextuel ou fermeture)
+document.addEventListener('click', (e) => {
+  const pinCard = e.target.closest('.pin-card');
+
+  // Si on clique sur une action du menu contextuel
+  if (e.target.closest('.pin-context-menu')) {
+    const card = e.target.closest('.pin-card');
+    const id = card.dataset.id;
+    const action = e.target.dataset.action;
+
+    if (action === 'duplicate') {
+      manager.duplicateBoard(id);
+      renderPins(); // Ferme le menu et rafraîchit
+    }
+
+    if (action === 'change-color') {
+      const board = manager.getBoardById(id);
+      if (board) {
+        const currentIndex = colorCycle.indexOf(board.color);
+        const nextColor = colorCycle[(currentIndex + 1) % colorCycle.length];
+        manager.updateBoard(id, { color: nextColor });
+        renderPins();
+      }
+    }
+    return;
+  }
+
+  // Si on clique en dehors d'un pin ouvert, on ferme tous les menus contextuels
+  document.querySelectorAll('.pin-card.menu-open').forEach(card => {
+    if (!card.contains(e.target)) {
+      card.classList.remove('menu-open');
+    }
+  });
+});
 
 // Gestion de l'ouverture de la modale
 if (openModalBtn) {
@@ -183,8 +259,14 @@ if (pinboard) {
     }
 
     if (e.target.dataset.action === 'delete') {
-      manager.deleteBoard(id);
-      renderPins();
+      // 1. Déclenche l'animation visuelle de dissolution
+      pinCard.classList.add('dissolving');
+
+      // 2. Attend la fin de la transition (350ms) avant de supprimer réellement
+      setTimeout(() => {
+        manager.deleteBoard(id);
+        renderPins();
+      }, 350);
     }
   });
 

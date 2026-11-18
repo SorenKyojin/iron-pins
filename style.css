@@ -34,12 +34,19 @@ html{
     background-color: var(--dark-bg-color);
     color: var(--font-color-dark);
 }
+body {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
 *{
     transition-duration: 250ms;
 }
 h1{
     font-family: 'League Spartan', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 36px;
+}
+h2, h3, h4, h5{
+    font-family: 'League Spartan', Tahoma, Geneva, Verdana, sans-serif;
 }
 p, span, button, input, textarea, label{
     font-family: "Inter", sans-serif;
@@ -201,7 +208,57 @@ select{
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   break-inside: avoid; /* Empêche un pin d'être coupé en deux entre deux colonnes */
   margin-bottom: 16px; /* Crée l'espacement vertical exact entre deux pins */
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+/* État lors de la suppression (dissolution) */
+.pin-card.dissolving {
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none; /* Évite les doubles clics pendant la disparition */
+}
+/* Le menu contextuel caché derrière le pin (en haut, hors champ) */
+.pin-context-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--pin-darker);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  box-sizing: border-box;
   
+  /* Caché par défaut au-dessus (glissé vers le haut) */
+  transform: translateY(-100%);
+  transition: transform 0.4s ease-in-out;
+  z-index: 20;
+}
+
+/* Quand le menu est ouvert, il glisse vers le bas pour se positionner */
+.pin-card.menu-open .pin-context-menu {
+  transform: translateY(0);
+}
+
+/* Boutons du menu contextuel */
+.pin-context-menu button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1.1rem;
+  text-align: left;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.pin-context-menu button:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Texte blanc uniquement pour les pins bleus (comme sur la maquette) */
