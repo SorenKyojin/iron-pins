@@ -2,82 +2,179 @@
 // 1. CLASSE DE GESTION DES DONNÉES (BoardManager)
 // ==========================================
 class BoardManager {
-  constructor(storageKey = 'my_pins') {
-    this.storageKey = storageKey;
-    this.boards = this.loadFromStorage();
-  }
-
-  loadFromStorage() {
-    const data = localStorage.getItem(this.storageKey);
-    return data ? JSON.parse(data) : [];
-  }
-
-  saveToStorage() {
-    localStorage.setItem(this.storageKey, JSON.stringify(this.boards));
-  }
-
-  createBoard({ title, description = '', status = 'todo', color = 'yellow' }) {
-    if (!title || title.trim() === '') {
-      throw new Error('Le titre est obligatoire pour créer un pin.');
+  constructor(metaKey = 'iron_tables_meta') {
+    this.metaKey = metaKey;
+    this.meta = this.loadMeta();
+    this.pins = [];
+    if (this.meta.activeId) {
+      this.pins = this.loadBoardPins(this.meta.activeId);
     }
+  }
 
-    const newBoard = {
+  loadMeta() {
+    const raw = localStorage.getItem(this.metaKey);
+    return raw ? JSON.parse(raw) : { tables: [], activeId: null };
+  }
+
+  saveMeta() {
+    localStorage.setItem(this.metaKey, JSON.stringify(this.meta));
+  }
+
+  // Génère un ID lisible type "table1", "table2", etc.
+  generateTableId() {
+    let index = this.meta.tables.length + 1;
+    let candidate = `table${index}`;
+    while (this.meta.tables.some(t => t.id === candidate) || localStorage.getItem(candidate) !== null) {
+      index++;
+      candidate = `table${index}`;
+    }
+    return candidate;
+  }
+
+  loadBoardPins(tableId) {
+    const raw = localStorage.getItem(tableId);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  saveBoardPins() {
+    if (!this.meta.activeId) return;
+    localStorage.setItem(this.meta.activeId, JSON.stringify(this.pins));
+  }
+
+  // Crée un nouveau tableau vide (nouvelle clé dans le localStorage)
+  createTable(name) {
+    if (!name || !name.trim()) {
+      throw new Error('Le nom du tableau est obligatoire.');
+    }
+    const id = this.generateTableId();
+    const newTable = {
+      id,
+      name: name.trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    this.meta.tables.push(newTable);
+    this.meta.activeId = id;
+    this.pins = [];
+
+    this.saveMeta();
+    this.saveBoardPins(); // Crée la clé "tableX" avec "[]"
+    return newTable;
+  }
+
+  getTables() {
+    return this.meta.tables;
+  }
+
+  getActiveTable() {
+    if (!this.meta.activeId) return null;
+    return this.meta.tables.find(t => t.id === this.meta.activeId) || null;
+  }
+
+  openTable(tableId) {
+    const exists = this.meta.tables.some(t => t.id === tableId);
+    if (!exists) return false;
+    this.meta.activeId = tableId;
+    this.pins = this.loadBoardPins(tableId);
+    this.saveMeta();
+    return true;
+  }
+
+  // Ferme le tableau ouvert (sauf s'il s'agit du seul tableau)
+  closeTable() {
+    if (!this.meta.activeId || this.meta.tables.length <= 1) {
+      return false;
+    }
+    this.meta.activeId = null;
+    this.pins = [];
+    this.saveMeta();
+    return true;
+  }
+
+  renameTable(tableId, newName) {
+    const table = this.meta.tables.find(t => t.id === tableId);
+    if (table && newName.trim()) {
+      table.name = newName.trim();
+      this.saveMeta();
+    }
+  }
+
+  // Supprime la clé du tableau dans le localStorage et ouvre un autre tableau si disponible
+  deleteActiveTable() {
+    const currentId = this.meta.activeId;
+    if (!currentId) return null;
+
+    localStorage.removeItem(currentId);
+    this.meta.tables = this.meta.tables.filter(t => t.id !== currentId);
+
+    const nextTable = this.meta.tables[0] || null;
+    this.meta.activeId = nextTable ? nextTable.id : null;
+    this.pins = nextTable ? this.loadBoardPins(nextTable.id) : [];
+
+    this.saveMeta();
+    return nextTable;
+  }
+
+  // --- CRUD des pins du tableau actif ---
+
+  getPins() {
+    return this.pins;
+  }
+
+  getPinById(pinId) {
+    return this.pins.find(p => p.id === pinId);
+  }
+
+  createPin({ title, description = '', status = 'todo', color = 'yellow' }) {
+    if (!this.meta.activeId) {
+      throw new Error('Veuillez d’abord créer ou ouvrir un tableau.');
+    }
+    if (!title || !title.trim()) {
+      throw new Error('Le titre est obligatoire.');
+    }
+    const pin = {
       id: crypto.randomUUID(),
       title: title.trim(),
       description: description.trim(),
-      status: status,
-      color: color,
+      status,
+      color,
       createdAt: new Date().toISOString()
     };
-
-    this.boards.push(newBoard);
-    this.saveToStorage();
-    return newBoard;
+    this.pins.push(pin);
+    this.saveBoardPins();
+    return pin;
   }
 
-  getBoards() {
-    return this.boards;
+  updatePin(pinId, updates) {
+    const idx = this.pins.findIndex(p => p.id === pinId);
+    if (idx === -1) return null;
+    this.pins[idx] = { ...this.pins[idx], ...updates };
+    this.saveBoardPins();
+    return this.pins[idx];
   }
 
-  getBoardById(id) {
-    return this.boards.find(board => board.id === id);
+  duplicatePin(pinId) {
+    const pin = this.getPinById(pinId);
+    if (!pin) return null;
+    const copy = {
+      ...pin,
+      id: crypto.randomUUID(),
+      title: `${pin.title} (Copie)`,
+      createdAt: new Date().toISOString()
+    };
+    this.pins.push(copy);
+    this.saveBoardPins();
+    return copy;
   }
 
-  updateBoard(id, updates) {
-    const index = this.boards.findIndex(board => board.id === id);
-    if (index === -1) return null;
-
-    const { id: _, createdAt: __, ...allowedUpdates } = updates;
-
-    this.boards[index] = { ...this.boards[index], ...allowedUpdates };
-    this.saveToStorage();
-    return this.boards[index];
-  }
-
-  deleteBoard(id) {
-    const initialLength = this.boards.length;
-    this.boards = this.boards.filter(board => board.id !== id);
-    
-    if (this.boards.length !== initialLength) {
-      this.saveToStorage();
+  deletePin(pinId) {
+    const before = this.pins.length;
+    this.pins = this.pins.filter(p => p.id !== pinId);
+    if (this.pins.length !== before) {
+      this.saveBoardPins();
       return true;
     }
     return false;
-  }
-  duplicateBoard(id) {
-    const board = this.getBoardById(id);
-    if (!board) return null;
-
-    const duplicatedBoard = {
-      ...board,
-      id: crypto.randomUUID(),
-      title: `${board.title} (Copie)`,
-      createdAt: new Date().toISOString()
-    };
-
-    this.boards.push(duplicatedBoard);
-    this.saveToStorage();
-    return duplicatedBoard;
   }
 }
 
@@ -117,7 +214,7 @@ const colorCycle = ['yellow', 'blue', 'red', 'green', 'purple'];
 function renderPins() {
   if (!pinboard) return;
   pinboard.innerHTML = '';
-  const boards = manager.getBoards();
+  const boards = manager.getPins();
   
   boards.forEach(board => {
     const pinElement = document.createElement('div');
@@ -180,16 +277,16 @@ document.addEventListener('click', (e) => {
     const action = e.target.dataset.action;
 
     if (action === 'duplicate') {
-      manager.duplicateBoard(id);
+      manager.duplicatePin(id);
       renderPins(); // Ferme le menu et rafraîchit
     }
 
     if (action === 'change-color') {
-      const board = manager.getBoardById(id);
+      const board = manager.getPinById(id);
       if (board) {
         const currentIndex = colorCycle.indexOf(board.color);
         const nextColor = colorCycle[(currentIndex + 1) % colorCycle.length];
-        manager.updateBoard(id, { color: nextColor });
+        manager.updatePin(id, { color: nextColor });
         renderPins();
       }
     }
@@ -226,7 +323,7 @@ if (modalForm) {
   modalForm.addEventListener('submit', (e) => {
     e.preventDefault();
     try {
-      manager.createBoard({
+      manager.createPin({
         title: inputTitre.value,
         description: inputDescription.value,
         status: selectStatut.value,
@@ -249,11 +346,11 @@ if (pinboard) {
     const id = pinCard.dataset.id;
 
     if (e.target.dataset.action === 'toggle-status') {
-      const board = manager.getBoardById(id);
+      const board = manager.getPinById(id);
       if (board) {
         const currentIndex = statusCycle.indexOf(board.status);
         const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
-        manager.updateBoard(id, { status: nextStatus });
+        manager.updatePin(id, { status: nextStatus });
         renderPins();
       }
     }
@@ -264,7 +361,7 @@ if (pinboard) {
 
       // 2. Attend la fin de la transition (350ms) avant de supprimer réellement
       setTimeout(() => {
-        manager.deleteBoard(id);
+        manager.deletePin(id);
         renderPins();
       }, 350);
     }
@@ -278,17 +375,201 @@ if (pinboard) {
     if (e.target.classList.contains('pin-title')) {
       const newTitle = e.target.textContent.trim();
       if (newTitle) {
-        manager.updateBoard(id, { title: newTitle });
+        manager.updatePin(id, { title: newTitle });
         e.target.setAttribute('title', newTitle);
       }
     }
 
     if (e.target.classList.contains('pin-desc')) {
       const newDesc = e.target.textContent.trim();
-      manager.updateBoard(id, { description: newDesc });
+      manager.updatePin(id, { description: newDesc });
     }
   }, true);
 }
+
+const tableMenuBtn = document.getElementById('board-menu-btn');
+const tableMenu = document.querySelector('.table-menu');
+const topBar = document.querySelector('.top-bar');
+const boardTitleEl = document.getElementById('board-title');
+
+// Boutons fixes dans .table-menu (Nouveau, Fermer, Supprimer)
+const [btnNewTable, btnCloseTable, btnDeleteTable] = tableMenu
+  ? tableMenu.querySelectorAll('.menu-btn')
+  : [];
+const separatorEl = tableMenu ? tableMenu.querySelector('.h-separator') : null;
+
+function closeTableMenu() {
+  if (tableMenu) tableMenu.classList.add('hidden');
+}
+
+function renderTableMenu() {
+  if (!tableMenu) return;
+
+  const tables = manager.getTables();
+  const activeTable = manager.getActiveTable();
+
+  // "Fermer" désactivé s'il n'y a pas de tableau ouvert ou s'il n'y en a qu'un seul
+  if (btnCloseTable) {
+    btnCloseTable.disabled = !activeTable || tables.length <= 1;
+  }
+
+  // "Supprimer" désactivé s'il n'y a aucun tableau ouvert
+  if (btnDeleteTable) {
+    btnDeleteTable.disabled = !activeTable;
+  }
+
+  // Supprime les anciens boutons de tableaux situés après le séparateur
+  if (separatorEl) {
+    let next = separatorEl.nextElementSibling;
+    while (next) {
+      const toRemove = next;
+      next = next.nextElementSibling;
+      toRemove.remove();
+    }
+
+    // Ajoute la liste de tous les tableaux créés
+    tables.forEach(table => {
+      const itemBtn = document.createElement('button');
+      itemBtn.type = 'button';
+      itemBtn.className = 'menu-btn';
+      itemBtn.textContent = table.name;
+
+      const isCurrent = activeTable && table.id === activeTable.id;
+      if (isCurrent) {
+        itemBtn.disabled = true;
+        itemBtn.classList.add('is-current');
+      } else {
+        itemBtn.addEventListener('click', () => {
+          manager.openTable(table.id);
+          closeTableMenu();
+          refreshBoardView();
+        });
+      }
+
+      tableMenu.appendChild(itemBtn);
+    });
+  }
+}
+
+function refreshBoardView() {
+  const activeTable = manager.getActiveTable();
+
+  if (!activeTable) {
+    // Aucun tableau ouvert : on cache la top-bar (et les pins)
+    if (topBar) topBar.classList.add('hidden');
+    if (boardTitleEl) boardTitleEl.textContent = '';
+  } else {
+    // Tableau ouvert : on affiche la top-bar et le nom du tableau
+    if (topBar) topBar.classList.remove('hidden');
+    if (boardTitleEl) {
+      boardTitleEl.textContent = activeTable.name;
+      boardTitleEl.setAttribute('contenteditable', 'true');
+      boardTitleEl.setAttribute('spellcheck', 'false');
+    }
+  }
+
+  renderTableMenu();
+  if (typeof renderPins === 'function') {
+    renderPins();
+  }
+}
+function positionTableMenu() {
+  if (!tableMenuBtn || !tableMenu) return;
+
+  const btnRect = tableMenuBtn.getBoundingClientRect();
+  const gap = 8; // Espace vertical en pixels sous le bouton
+
+  tableMenu.style.position = 'fixed';
+  tableMenu.style.top = `${Math.round(btnRect.bottom + gap)}px`;
+  // Aligne le bord droit du menu sur le bord droit du bouton "Tableau..."
+  tableMenu.style.right = `${Math.round(window.innerWidth - btnRect.right)}px`;
+  tableMenu.style.left = 'auto';
+  tableMenu.style.bottom = 'auto';
+}
+
+// Ouverture / fermeture du menu au clic sur "Tableau..."
+if (tableMenuBtn && tableMenu) {
+  tableMenuBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof renderTableMenu === 'function') {
+      renderTableMenu();
+    }
+    const willOpen = tableMenu.classList.contains('hidden');
+    tableMenu.classList.toggle('hidden');
+    if (willOpen) {
+      positionTableMenu();
+    }
+  });
+}
+
+window.addEventListener('resize', () => {
+  if (tableMenu && !tableMenu.classList.contains('hidden')) {
+    positionTableMenu();
+  }
+});
+
+// Fermeture du menu si on clique en dehors
+document.addEventListener('click', (e) => {
+  if (tableMenu && !tableMenu.classList.contains('hidden') && e.target !== tableMenuBtn) {
+    closeTableMenu();
+  }
+});
+
+// Action "Nouveau" : crée un nouveau tableau vide (nouvelle clé localStorage)
+if (btnNewTable) {
+  btnNewTable.addEventListener('click', () => {
+    const name = prompt('Nom du nouveau tableau :');
+    if (name && name.trim()) {
+      manager.createTable(name);
+      closeTableMenu();
+      refreshBoardView();
+    }
+  });
+}
+
+// Action "Fermer" : ferme le tableau ouvert et cache la top-bar
+if (btnCloseTable) {
+  btnCloseTable.addEventListener('click', () => {
+    if (manager.closeTable()) {
+      closeTableMenu();
+      refreshBoardView();
+    }
+  });
+}
+
+// Action "Supprimer" : supprime la clé du tableau et ouvre un autre tableau s'il en existe
+if (btnDeleteTable) {
+  btnDeleteTable.addEventListener('click', () => {
+    manager.deleteActiveTable();
+    closeTableMenu();
+    refreshBoardView();
+  });
+}
+
+// Renommer le tableau en cliquant sur son nom à gauche
+if (boardTitleEl) {
+  boardTitleEl.addEventListener('blur', () => {
+    const activeTable = manager.getActiveTable();
+    if (!activeTable) return;
+    const newName = boardTitleEl.textContent.trim();
+    if (newName) {
+      manager.renameTable(activeTable.id, newName);
+      renderTableMenu();
+    } else {
+      boardTitleEl.textContent = activeTable.name;
+    }
+  });
+
+  boardTitleEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      boardTitleEl.blur();
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', refreshBoardView);
 
 function escapeHTML(str) {
   if (!str) return '';
