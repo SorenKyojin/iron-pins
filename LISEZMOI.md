@@ -1,3 +1,5 @@
+<img src="img/logo.png" alt="Logo" width="200"/>
+
 # Iron Pins
 Iron Pins est à l'origine un exercice de formation Développement IA par Simplon.
 Conçu en JavaScript, HTML5 et CSS, on utilisera l'outil Tauri pour l'intégrer comme programme.
