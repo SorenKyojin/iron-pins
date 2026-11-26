@@ -21,5 +21,4 @@ Dans sa particularité d'utiliser JavaScript, Iron Pins stocke directement les d
 ## Fonctionnalités à venir
 - Export et Importation d'un tableau depuis un fichier
 - Affichage de la date de création
-- Rechercher des pins dans un tableau
 - Choisir une couleur personnalisée
