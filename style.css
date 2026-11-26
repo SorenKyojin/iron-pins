@@ -416,3 +416,13 @@ select{
   background-color: rgba(255, 255, 255, 0.15);
   margin: 6px 8px;
 }
+
+.pin-card {
+  transition: transform 0.35s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+/* Pins qui ne correspondent pas aux mots-clés recherchés */
+.pin-card.search-dimmed {
+  opacity: 0.25;
+}

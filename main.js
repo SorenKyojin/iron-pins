@@ -211,36 +211,35 @@ document.addEventListener('contextmenu', (e) => {
 const colorCycle = ['yellow', 'blue', 'red', 'green', 'purple'];
 
 // Mise à jour de la fonction renderPins pour inclure le menu caché
-function renderPins() {
+function renderPins(pinsToRender) {
   if (!pinboard) return;
+
+  const pins = Array.isArray(pinsToRender) ? pinsToRender : manager.getPins();
   pinboard.innerHTML = '';
-  const boards = manager.getPins();
-  
-  boards.forEach(board => {
+
+  pins.forEach(pin => {
     const pinElement = document.createElement('div');
     pinElement.classList.add('pin-card');
-    pinElement.dataset.id = board.id;
-    
-    if (board.color) {
-      pinElement.style.backgroundColor = `var(--pin-${board.color})`;
-      pinElement.style.setProperty('--pin-darker', `var(--pin-${board.color}-d)` );
+    pinElement.dataset.id = pin.id;
+
+    if (pin.color) {
+      pinElement.style.backgroundColor = `var(--pin-${pin.color})`;
+      pinElement.style.setProperty('--pin-darker', `var(--pin-${pin.color}-d)`);
     }
 
-    if (board.color === 'blue') {
+    if (pin.color === 'blue') {
       pinElement.classList.add('pin-blue-text');
     }
 
-    const currentStatusInfo = statusMap[board.status] || statusMap['todo'];
+    const currentStatusInfo = statusMap[pin.status] || statusMap['todo'];
 
     pinElement.innerHTML = `
       <div class="pin-header">
         <span class="status-badge ${currentStatusInfo.class}" data-action="toggle-status" title="Changer le statut"></span>
-        <h3 class="pin-title" contenteditable="true" spellcheck="false" title="${escapeHTML(board.title)}">${escapeHTML(board.title)}</h3>
+        <h3 class="pin-title" contenteditable="true" spellcheck="false" title="${escapeHTML(pin.title)}">${escapeHTML(pin.title)}</h3>
         <button class="delete-btn" data-action="delete" title="Supprimer">×</button>
       </div>
-      <p class="pin-desc" contenteditable="true" spellcheck="false">${escapeHTML(board.description)}</p>
-      
-      <!-- Menu contextuel caché derrière le pin -->
+      <p class="pin-desc" contenteditable="true" spellcheck="false">${escapeHTML(pin.description)}</p>
       <div class="pin-context-menu">
         <button data-action="duplicate">Dupliquer</button>
         <button data-action="change-color">Changer la couleur</button>
@@ -249,6 +248,10 @@ function renderPins() {
 
     pinboard.appendChild(pinElement);
   });
+
+  if (typeof applyPinSearch === 'function') {
+    applyPinSearch();
+  }
 }
 
 // Gestion du clic droit sur un pin pour afficher le menu
@@ -568,6 +571,136 @@ if (boardTitleEl) {
     }
   });
 }
+const searchBarEl = document.getElementById('search-bar');
+const searchSubmitBtn = document.getElementById('search-submit');
+
+// Récupère l'élément <input> même si #search-bar est un conteneur englobant
+const searchInput = searchBarEl
+  ? (searchBarEl.matches('input, textarea') ? searchBarEl : searchBarEl.querySelector('input, textarea'))
+  : null;
+
+function runPinSearch() {
+  const allPins = manager.getPins();
+  const rawQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+  if (!rawQuery) {
+    renderPins(allPins);
+    return;
+  }
+
+  // Découpe en mots-clés : chaque mot doit être présent dans le titre ou la description
+  const keywords = rawQuery.split(/\s+/);
+
+  const filteredPins = allPins.filter(pin => {
+    const haystack = `${pin.title || ''} ${pin.description || ''}`.toLowerCase();
+    return keywords.every(word => haystack.includes(word));
+  });
+
+  renderPins(filteredPins);
+}
+
+if (searchSubmitBtn) {
+  searchSubmitBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    runPinSearch();
+  });
+}
+
+if (searchInput) {
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      runPinSearch();
+    }
+  });
+
+  // Réaffiche tous les pins dès que l'utilisateur efface la recherche
+  searchInput.addEventListener('input', () => {
+    if (!searchInput.value.trim()) {
+      renderPins(manager.getPins());
+    }
+  });
+}
+function getSearchElements() {
+  const bar = document.getElementById('search-bar');
+  const input =
+    (bar && (bar.matches('input, textarea') ? bar : bar.querySelector('input, textarea'))) ||
+    document.getElementById('search-input') ||
+    document.querySelector('#board-controls input[type="text"], #board-controls input[type="search"], header input[type="text"], header input[type="search"]');
+
+  const submitBtn =
+    document.getElementById('search-submit') ||
+    document.getElementById('search-btn') ||
+    (bar && bar.querySelector('button[type="submit"], button')) ||
+    Array.from(document.querySelectorAll('#board-controls button, header button')).find(
+      btn => btn.textContent.trim().toLowerCase() === 'rechercher'
+    ) ||
+    null;
+
+  return { bar, input, submitBtn };
+}
+
+function applyPinSearch() {
+  const { input } = getSearchElements();
+  const pinCards = pinboard ? Array.from(pinboard.querySelectorAll('.pin-card')) : [];
+  if (pinCards.length === 0) return;
+
+  const rawQuery = input ? input.value.trim().toLowerCase() : '';
+
+  // Champ vide : on annule la recherche et tous les pins repassent à 100 % d'opacité
+  if (!rawQuery) {
+    pinCards.forEach(card => card.classList.remove('search-dimmed'));
+    return;
+  }
+
+  const keywords = rawQuery.split(/\s+/).filter(Boolean);
+
+  pinCards.forEach(card => {
+    const titleEl = card.querySelector('.pin-title');
+    const descEl = card.querySelector('.pin-desc');
+    const haystack = `${titleEl ? titleEl.textContent : ''} ${descEl ? descEl.textContent : ''}`.toLowerCase();
+
+    const matchesAll = keywords.every(word => haystack.includes(word));
+    card.classList.toggle('search-dimmed', !matchesAll);
+  });
+}
+
+function initPinSearch() {
+  const { bar, input, submitBtn } = getSearchElements();
+
+  // Si la barre de recherche est un <form>, on bloque la soumission classique (GET / rechargement)
+  const form = bar && bar.tagName === 'FORM' ? bar : (input ? input.closest('form') : null);
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      applyPinSearch();
+    });
+  }
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      applyPinSearch();
+    });
+  }
+
+  if (input) {
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      applyPinSearch();
+    }
+  });
+
+  input.addEventListener('input', () => {
+    if (!input.value.trim()) {
+      applyPinSearch();
+    }
+  });
+}
+}
+
+document.addEventListener('DOMContentLoaded', initPinSearch);
 
 document.addEventListener('DOMContentLoaded', refreshBoardView);
 
